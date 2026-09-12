@@ -11,5 +11,5 @@ Cryptic Storytelling: NPC dialogue boxes with animated avatars and custom lore.
 Economic Pressure: Real-time inflation scaling and credit tracking with emergency loan mechanics.
 Audio Feedback: Web Audio API synthesized cash register sound effects on clicks and trades.
 Vibrant UI: Custom color palette featuring rich pinks, purples, greens, yellows, and sky blues with smooth CSS animations.
-
-
+Link for game:
+https://fatmashahid18-boop.github.io/Fun-with-Finance11/
