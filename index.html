@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fun with Finance - Balanced Complexity Strategy</title>
+    <style>
+        :root {
+            --primary: #ec4899;
+            --primary-hover: #db2777;
+            --bg-color: #2e1065;
+            --card-bg: #4c1d95;
+            --text-color: #fdf4ff;
+            --accent: #4ade80;
+            --danger: #f87171;
+            --warning: #facc15;
+            --sky: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #2e1065, #701a75, #1e1b4b);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            color: var(--warning);
+            text-shadow: 0 2px 10px rgba(250, 204, 21, 0.4);
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: var(--sky);
+            font-weight: 600;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 950px;
+            background: rgba(76, 29, 149, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(236, 72, 153, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(90deg, #1e1b4b, #312e81);
+            border: 2px solid var(--sky);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat-item span {
+            color: var(--accent);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            color: var(--warning);
+        }
+
+        p.instruction {
+            margin-bottom: 15px;
+            color: #e9d5ff;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .market-status {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed var(--warning);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--warning);
+        }
+
+        .inventory-panel {
+            background: linear-gradient(135deg, #1e1b4b, #581c87);
+            border: 1px solid var(--primary);
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+
+        .npc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .npc-card {
+            background: linear-gradient(145deg, #581c87, #3b0764);
+            border: 2px solid #7c3aed;
+            border-radius: 14px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .npc-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(236, 72, 153, 0.3);
+        }
+
+        .npc-card.selected {
+            border-color: var(--accent);
+            background: linear-gradient(145deg, #065f46, #047857);
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
+        }
+
+        .npc-avatar {
+            font-size: 2.5rem;
+            margin-bottom: 6px;
+            display: inline-block;
+            animation: bounceAvatar 2s infinite ease-in-out;
+        }
+
+        @keyframes bounceAvatar {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .npc-card h3 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            color: var(--sky);
+        }
+
+        .npc-card p {
+            font-size: 0.75rem;
+            color: #f3e8ff;
+            font-style: italic;
+        }
+
+        /* Dialogue Overlay */
+        .dialogue-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 5, 36, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .dialogue-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .dialogue-box {
+            background: linear-gradient(145deg, #4c1d95, #3b0764);
+            border: 3px solid var(--warning);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 520px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        .dialogue-avatar {
+            font-size: 4.5rem;
+            margin-bottom: 15px;
+            animation: speakMotion 0.8s infinite alternate ease-in-out;
+        }
+
+        @keyframes speakMotion {
+            0% { transform: translateY(0) rotate(-5deg); }
+            100% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .dialogue-text {
+            font-size: 1.1rem;
+            color: #fdf4ff;
+            margin-bottom: 25px;
+            min-height: 80px;
+            line-height: 1.5;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--sky);
+            font-style: italic;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), #db2777);
+            color: white;
+            border: none;
+            padding: 12px 26px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(236, 72, 153, 0.6);
+            background: linear-gradient(135deg, #f472b6, var(--primary));
+        }
+
+        .message-box {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .message-box.error {
+            background: rgba(248, 113, 113, 0.25);
+            border: 1px solid var(--danger);
+            color: #fecaca;
+        }
+
+        .message-box.success {
+            background: rgba(74, 222, 128, 0.25);
+            border: 1px solid var(--accent);
+            color: #bbf7d0;
+        }
+
+        .center-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .center-screen h2 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Fun with Finance</h1>
+        <p>Balanced Strategy: Story Clues with Inflation & Credit Management</p>
+    </header>
+
+    <div class="game-container">
+        <!-- Stats bar -->
+        <div class="stats-bar" id="statsBar" style="display: none;">
+            <div class="stat-item">Level: <span id="currentLevelDisplay">1</span>/3</div>
+            <div class="stat-item">Cash: $<span id="moneyDisplay">130</span></div>
+            <div class="stat-item">Credit: <span id="creditDisplay">750</span></div>
+            <div class="stat-item">Inflation: <span id="inflationDisplay">0%</span></div>
+        </div>
+
+        <!-- WELCOME SCREEN -->
+        <div id="welcomeScreen" class="screen active center-screen">
+            <h2>Welcome to Strategy Mode! 📈</h2>
+            <p class="instruction">Characters tell their stories (no direct item names given), and market inflation rises with every transaction. You must deduce the supply chain sequence while keeping your cash and credit safe across 3 complex levels!</p>
+            <button class="btn" onclick="startIntroSequence()">Begin Strategic Game</button>
+        </div>
+
+        <!-- LEVEL SCREEN -->
+        <div id="levelScreen" class="screen">
+            <h2 id="levelTitle">Level Title</h2>
+            <p class="instruction" id="levelDesc">Deduce the chain from their stories...</p>
+
+            <div class="market-status" id="marketTrendText">Market active. Watch out for inflation!</div>
+
+            <div class="inventory-panel">
+                <div><strong>Current Item Held:</strong> <span id="invPrimary" style="color: var(--warning);">None</span></div>
+            </div>
+
+            <p style="margin-bottom: 10px; font-weight: bold; color: var(--sky);">Select counterpart to trade based on their story:</p>
+            <div class="npc-grid" id="npcGrid"></div>
+
+            <div style="text-align: right; display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn" style="background: linear-gradient(135deg, #d97706, #b45309);" onclick="takeLoan()">Take Loan (+$50 Cash / -50 Credit)</button>
+                <button class="btn" id="actionBtn" onclick="executeAction()">Make Strategic Trade</button>
+            </div>
+
+            <div id="gameMessage" class="message-box" style="display: none;"></div>
+        </div>
+
+        <!-- LEVEL COMPLETE SCREEN -->
+        <div id="levelCompleteScreen" class="screen center-screen">
+            <h2 style="color: var(--accent);">Level Cleared Successfully! 🎉</h2>
+            <p class="instruction" id="levelCompleteText">You mastered this strategic market level.</p>
+            <button class="btn" onclick="nextLevel()">Proceed to Next Level</button>
+        </div>
+
+        <!-- GAME OVER SCREEN -->
+        <div id="gameoverScreen" class="screen center-screen">
+            <h2 style="color: var(--danger);">Supply Chain or Financial Collapse! 💥</h2>
+            <p class="instruction" id="gameoverText">You went bankrupt, lost credit, or chose the wrong order.</p>
+            <button class="btn" onclick="resetGame()">Try Again</button>
+        </div>
+
+        <!-- VICTORY SCREEN -->
+        <div id="victoryScreen" class="screen center-screen">
+            <h2 style="color: var(--warning);">Master Strategist! 🏆</h2>
+            <p class="instruction">Incredible work! You successfully decoded all stories, managed inflation and credit, and beat all 3 complex levels!</p>
+            <button class="btn" onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <!-- DIALOGUE OVERLAY -->
+    <div id="dialogueOverlay" class="dialogue-overlay">
+        <div class="dialogue-box">
+            <div class="dialogue-avatar" id="dialogueAvatar">👨‍🌾</div>
+            <h3 id="dialogueName" style="color: var(--warning); margin-bottom: 10px; font-size: 1.3rem;">Character Name</h3>
+            <div class="dialogue-text" id="dialogueText">Story text...</div>
+            <button class="btn" id="dialogueNextBtn" onclick="advanceDialogue()">Next Story ➡️</button>
+        </div>
+    </div>
+
+    <script>
+        function playCashSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.15);
+                osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.22);
+
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.45);
+            } catch (e) {}
+        }
+
+        let currentLevel = 1;
+        let money = 130;
+        let credit = 750;
+        let inflation = 0;
+        let holdingItem = null;
+        let selectedNpcIndex = null;
+        let expectedStepIndex = 0;
+        let dialogueStep = 0;
+
+        const levelsData = [
+            {
+                level: 1,
+                title: "Level 1: The Village Market Economy",
+                description: "Read their stories to figure out who gives raw supplies, who mills them, who transports them, who inspects them, and who buys the final product!",
+                startingMoney: 130,
+                inflationRate: 10,
+                marketTrend: "Inflation Warning: Costs increase by 10% with every transaction you make!",
+                npcs: [
+                    { name: "Farmer Marcus", avatar: "👨‍🌾", offer: "Raw Grain", cost: 50, story: "\"My fields are overflowing under the morning sun, but my pockets are empty. I'll part with my harvest if someone invests initial cash to kick things off.\"" },
+                    { name: "Baker Anna", avatar: "👩‍🍳", offer: "Refined Flour", cost: 0, story: "\"My stone mill stands idle, waiting for golden fields to arrive so I can grind them into fine flour for the town.\"" },
+                    { name: "Logistics Sam", avatar: "🚛", offer: "Bulk Cargo", cost: 0, story: "\"My transport trucks are parked outside waiting for cargo. If someone brings me milled flour, I'll secure the shipping route.\"" },
+                    { name: "Auditor Dan", avatar: "📋", offer: "Certified Permit", cost: 0, story: "\"Bureaucracy never sleeps! I'll issue an official Certified Permit if you bring me the loaded bulk cargo.\"" },
+                    { name: "Buyer Lily", avatar: "🌐", offer: "Final Profit", cost: 0, story: "\"I represent the export syndicate. Hand over the Certified Permit to close our regional trade loop and win the level!\"" }
+                ],
+                correctSequence: [0, 1, 2, 3, 4]
+            },
+            {
+                level: 2,
+                title: "Level 2: The High-Tech Startup Hub",
+                description: "Decode the tech startup stories to manage silicon, microchips, laptops, vouchers, and venture capital grants.",
+                startingMoney: 160,
+                inflationRate: 15,
+                marketTrend: "Tech Boom Warning: Costs increase by 15% per trade. Watch your cash!",
+                npcs: [
+                    { name: "Miner Silas", avatar: "⛏️", offer: "Raw Silicon", cost: 70, story: "\"My drills strike pure crystal underground. I need capital backing before I can haul raw silicon to the surface.\"" },
+                    { name: "Engineer Tech", avatar: "💻", offer: "Microchip", cost: 0, story: "\"My cleanroom operates at precision levels. Send raw silicon down my line so I can manufacture high-performance microchips.\"" },
+                    { name: "Assembler Chris", avatar: "🤖", offer: "Laptop Unit", cost: 0, story: "\"Workstations need processing power. Deliver microchips to my workbench so I can assemble full laptop units.\"" },
+                    { name: "Client Zack", avatar: "🧑‍💻", offer: "Voucher", cost: 0, story: "\"My team desperately needs new hardware. I'll trade a contract voucher if you bring me a completed laptop unit.\"" },
+                    { name: "Director Sarah", avatar: "👩‍💼", offer: "Venture Grant", cost: 0, story: "\"I manage startup funding. Bring me the signed contract voucher to release our massive venture grant and win!\"" }
+                ],
+                correctSequence: [0, 1, 2, 3, 4]
+            },
+            {
+                level: 3,
+                title: "Level 3: Global Supply Chain Syndicate",
+                description: "The ultimate test: Manage crates, packaged goods, quality stamps, store displays, and final global profits.",
+                startingMoney: 200,
+                inflationRate: 20,
+                marketTrend: "Global Crunch Warning: Costs surge by 20% per trade. Keep your credit above 400!",
+                npcs: [
+                    { name: "Logistics Ray", avatar: "📦", offer: "Shipping Crate", cost: 90, story: "\"My warehouses are filled with empty cargo crates. Fund me with initial cash to get international shipping moving.\"" },
+                    { name: "Manufacturer Mia", avatar: "🏭", offer: "Goods Package", cost: 0, story: "\"My factory assembly line is ready. Give me an empty shipping crate so I can pack our manufactured goods securely.\"" },
+                    { name: "Inspector Dan", avatar: "🔍", offer: "Quality Stamp", cost: 0, story: "\"Quality control is mandatory! I demand the packaged goods so I can inspect them and provide an official quality stamp.\"" },
+                    { name: "Retailer Emma", avatar: "🛍️", offer: "Store Display", cost: 0, story: "\"Store shelves need certified merchandise. Bring me the quality stamp so I can arrange our storefront display.\"" },
+                    { name: "Consumer Hub", avatar: "🛒", offer: "Tycoon Monopoly", cost: 0, story: "\"The retail loop ends here. Bring me the store display to close the supply chain and achieve absolute market monopoly!\"" }
+                ],
+                correctSequence: [0, 1, 2, 3, 4]
+            }
+        ];
+
+        function startIntroSequence() {
+            playCashSound();
+            document.getElementById('welcomeScreen').classList.remove('active');
+            document.getElementById('levelCompleteScreen').classList.remove('active');
+            dialogueStep = 0;
+            showDialogueStep();
+            document.getElementById('dialogueOverlay').classList.add('active');
+        }
+
+        function showDialogueStep() {
+            const data = levelsData[currentLevel - 1];
+            const npc = data.npcs[dialogueStep];
+
+            document.getElementById('dialogueAvatar').innerText = npc.avatar;
+            document.getElementById('dialogueName').innerText = `${npc.name} (${dialogueStep + 1} of 5)`;
+            document.getElementById('dialogueText').innerText = npc.story;
+
+            if (dialogueStep === data.npcs.length - 1) {
+                document.getElementById('dialogueNextBtn').innerText = "Begin Strategic Level! 🚀";
+            } else {
+                document.getElementById('dialogueNextBtn').innerText = "Next Story ➡️";
+            }
+        }
+
+        function advanceDialogue() {
+            playCashSound();
+            const data = levelsData[currentLevel - 1];
+            dialogueStep++;
+
+            if (dialogueStep < data.npcs.length) {
+                showDialogueStep();
+            } else {
+                document.getElementById('dialogueOverlay').classList.remove('active');
+                loadLevel(currentLevel);
+                document.getElementById('levelScreen').classList.add('active');
+                document.getElementById('statsBar').style.display = 'flex';
+            }
+        }
+
+        function loadLevel(lvlNum) {
+            const data = levelsData[lvlNum - 1];
+            money = data.startingMoney;
+            credit = 750;
+            inflation = 0;
+            holdingItem = null;
+            selectedNpcIndex = null;
+            expectedStepIndex = 0;
+
+            document.getElementById('currentLevelDisplay').innerText = lvlNum;
+            document.getElementById('moneyDisplay').innerText = money;
+            document.getElementById('creditDisplay').innerText = credit;
+            document.getElementById('inflationDisplay').innerText = inflation + "%";
+            document.getElementById('levelTitle').innerText = data.title;
+            document.getElementById('levelDesc').innerText = data.description;
+            document.getElementById('marketTrendText').innerText = data.marketTrend;
+            
+            updateInventoryUI();
+            hideMessage();
+            renderNpcs();
+        }
+
+        function updateInventoryUI() {
+            document.getElementById('invPrimary').innerText = holdingItem ? holdingItem : "None";
+        }
+
+        function renderNpcs() {
+            const data = levelsData[currentLevel - 1];
+            const grid = document.getElementById('npcGrid');
+            grid.innerHTML = '';
+
+            data.npcs.forEach((npc, index) => {
+                const card = document.createElement('div');
+                card.className = `npc-card ${selectedNpcIndex === index ? 'selected' : ''}`;
+                card.onclick = () => {
+                    playCashSound();
+                    selectNpc(index);
+                };
+                card.innerHTML = `
+                    <div class="npc-avatar">${npc.avatar}</div>
+                    <h3>${npc.name}</h3>
+                    <p style="font-size:0.75rem; margin-top:5px;">"${npc.story.substring(0, 50)}..."</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function selectNpc(index) {
+            selectedNpcIndex = index;
+            renderNpcs();
+            hideMessage();
+        }
+
+        function takeLoan() {
+            playCashSound();
+            money += 50;
+            credit -= 50;
+            inflation += 5;
+            document.getElementById('moneyDisplay').innerText = money;
+            document.getElementById('creditDisplay').innerText = credit;
+            document.getElementById('inflationDisplay').innerText = inflation + "%";
+            
+            if (credit <= 400) {
+                triggerGameOver("Your credit rating crashed below 400! Corporate insolvency.");
+                return;
+            }
+            showMessage("Emergency loan secured (+ $50 Cash / - 50 Credit / + 5% Inflation).", "error");
+        }
+
+        function executeAction() {
+            playCashSound();
+            if (selectedNpcIndex === null) {
+                showMessage("Select a character based on their story clues first!", "error");
+                return;
+            }
+
+            const data = levelsData[currentLevel - 1];
+            const targetNpcIndex = data.correctSequence[expectedStepIndex];
+
+            if (selectedNpcIndex !== targetNpcIndex) {
+                triggerGameOver("Supply chain failure! You approached the wrong person out of logical order.");
+                return;
+            }
+
+            const npc = data.npcs[selectedNpcIndex];
+
+            if (expectedStepIndex === 0) {
+                const totalCost = npc.cost + Math.round((npc.cost * inflation) / 100);
+                if (money < totalCost) {
+                    triggerGameOver("Bankruptcy! You ran out of cash to fund the initial resource.");
+                    return;
+                }
+                money -= totalCost;
+                holdingItem = npc.offer;
+            } else {
+                holdingItem = npc.offer;
+            }
+
+            inflation += data.inflationRate;
+            credit += 10;
+
+            document.getElementById('moneyDisplay').innerText = money;
+            document.getElementById('creditDisplay').innerText = credit;
+            document.getElementById('inflationDisplay').innerText = inflation + "%";
+            updateInventoryUI();
+            expectedStepIndex++;
+
+            if (expectedStepIndex === data.correctSequence.length) {
+                setTimeout(() => {
+                    if (currentLevel < levelsData.length) {
+                        document.getElementById('levelScreen').classList.remove('active');
+                        document.getElementById('levelCompleteScreen').classList.add('active');
+                        document.getElementById('levelCompleteText').innerText = `Level ${currentLevel} solved! Cash remaining: $${money}, Credit: ${credit}.`;
+                    } else {
+                        document.getElementById('levelScreen').classList.remove('active');
+                        document.getElementById('victoryScreen').classList.add('active');
+                        document.getElementById('statsBar').style.display = 'none';
+                    }
+                }, 300);
+            } else {
+                showMessage(`Successful transaction with ${npc.name}! Got ${npc.offer}. Inflation rose to ${inflation}%.`, "success");
+                selectedNpcIndex = null;
+                renderNpcs();
+            }
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            startIntroSequence();
+        }
+
+        function triggerGameOver(reason) {
+            document.getElementById('levelScreen').classList.remove('active');
+            document.getElementById('gameoverScreen').classList.add('active');
+            document.getElementById('gameoverText').innerText = reason;
+            document.getElementById('statsBar').style.display = 'none';
+        }
+
+        function resetGame() {
+            playCashSound();
+            document.getElementById('gameoverScreen').classList.remove('active');
+            document.getElementById('victoryScreen').classList.remove('active');
+            document.getElementById('welcomeScreen').classList.add('active');
+            document.getElementById('statsBar').style.display = 'none';
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('gameMessage');
+            msg.innerText = text;
+            msg.className = `message-box ${type}`;
+            msg.style.display = 'block';
+        }
+
+        function hideMessage() {
+            const msg = document.getElementById('gameMessage');
+            msg.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
